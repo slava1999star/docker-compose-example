@@ -1,0 +1,12 @@
+server.port: 1488
+blocks.schedule: 100000
+spring:
+  rabbitmq:
+    username: admin
+    password: admin
+    host: 127.0.0.1
+    port: 5672
+    virtual-host: /
+    template:
+      exchange: e.b.forward
+      routing-key: r.last-block

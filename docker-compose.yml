@@ -1,0 +1,83 @@
+version: "3.3"
+services:
+  postgres:
+    image: postgres:latest
+    env_file:
+      - postgres.env
+    volumes:
+      - ./volumes/postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d blocks"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      local:
+        ipv4_address: 10.5.0.4 
+
+  redis-cluster:
+    image: grokzen/redis-cluster:5.0.7
+    env_file:
+      - postgres.env
+    ports:
+      - "7000-7004:7000-7004"
+    volumes:
+      - ./volumes/redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      local:
+        ipv4_address: 10.5.0.5
+
+  rabbitmq:
+    image: rabbitmq:3.7-management
+    container_name: rabbitmq
+    hostname: rabbitmq
+    volumes:
+      - ./volumes/rabbitmq/data/:/var/lib/rabbitmq/
+      - ./volumes/rabbitmq/log/:/var/log/rabbitmq
+    ports:
+      - 15672:15672
+    env_file:
+      - rabbitmq.env
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+        local:
+          ipv4_address: 10.5.0.6 
+
+  sender:
+    build: docker-sender-blocks/.
+    env_file:
+      - sender.env
+    depends_on:
+      - rabbitmq
+    networks:
+      local:
+        ipv4_address: 10.5.0.7  
+
+  listener:
+    build: docker-listener-blocks/.
+    env_file:
+      - listener.env
+    depends_on:
+      - rabbitmq
+      - postgres
+      - redis-cluster
+    networks:
+      local:
+        ipv4_address: 10.5.0.8  
+
+networks:
+  local:
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.5.0.0/24

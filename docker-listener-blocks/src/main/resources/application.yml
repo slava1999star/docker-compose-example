@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://10.5.0.4:5432/blocks
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: postgres
+  redis:
+    cluster:
+      nodes: 127.0.0.1:7000
+  rabbitmq:
+    username: admin
+    password: admin
+    host: 127.0.0.1
+    port: 5672
+    virtual-host: /
+    template:
+      exchange: e.b.forward
+      routing-key: r.last-block
+  jpa:
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
